@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Image, Maximize2, Crop, RefreshCw, Zap, Pipette,
+  Maximize2, Crop, RefreshCw, Zap, Pipette,
   Eraser, Sliders, Type, Info, LayoutGrid, Upload,
-  Sun, Moon, Settings, History, Download, Trash2, X, Sparkles
+  Sun, Moon, Settings, History, Download, Trash2, X, SlidersHorizontal
 } from 'lucide-react';
 
 import ResizeTool from './components/ResizeTool';
@@ -18,7 +18,7 @@ import CollageTool from './components/CollageTool';
 
 export default function App() {
   const [activeTool, setActiveTool] = useState('resize');
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState('light');
   const [image, setImage] = useState(null);
   const [history, setHistory] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -29,7 +29,7 @@ export default function App() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
   };
 
   const handleFileUpload = (e) => {
@@ -81,30 +81,30 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Liquid Glass Header */}
-      <header className="glass-navbar">
+      {/* Stitch PurePixel Header */}
+      <header className="pure-navbar">
         <div className="brand-badge">
-          <Image className="brand-logo-icon" />
-          <span>ImgTools Liquid</span>
+          <SlidersHorizontal className="brand-logo-icon" />
+          <span>PurePixel Image Suite</span>
         </div>
 
         <div className="header-actions">
-          <button className="glass-btn-icon" onClick={() => setShowHistory(true)} title="Export History">
-            <History size={20} />
+          <button className="pure-btn-icon" onClick={() => setShowHistory(true)} title="Export History">
+            <History size={16} /> History
           </button>
-          <button className="glass-btn-icon" onClick={toggleTheme} title="Toggle Theme">
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          <button className="pure-btn-icon" onClick={toggleTheme} title="Toggle Theme">
+            {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
           </button>
-          <button className="glass-btn-icon" onClick={() => setShowSettings(false)} title="Settings">
-            <Settings size={20} onClick={() => setShowSettings(true)} />
+          <button className="pure-btn-icon" onClick={() => setShowSettings(true)} title="Settings">
+            <Settings size={16} />
           </button>
         </div>
       </header>
 
       {/* Main Viewport Layout */}
       <div className="main-viewport">
-        {/* Desktop Liquid Sidebar */}
-        <aside className="glass-sidebar">
+        {/* Desktop Sidebar */}
+        <aside className="pure-sidebar">
           {tools.map((tool) => {
             const Icon = tool.icon;
             return (
@@ -113,26 +113,26 @@ export default function App() {
                 className={`tool-nav-btn ${activeTool === tool.id ? 'active' : ''}`}
                 onClick={() => setActiveTool(tool.id)}
               >
-                <Icon size={20} />
+                <Icon size={18} />
                 <span>{tool.name}</span>
               </button>
             );
           })}
         </aside>
 
-        {/* Main Workspace Area */}
+        {/* Main Workspace */}
         <main className="workspace-area">
           {!image && activeTool !== 'collage' ? (
-            <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 20px' }}>
+            <div className="pure-panel" style={{ textAlign: 'center', padding: '60px 20px' }}>
               <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--accent-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: 'var(--accent-glow)' }}>
-                  <Upload size={38} color="#ffffff" />
+                <div style={{ width: '64px', height: '64px', borderRadius: '4px', backgroundColor: 'var(--primary)', color: 'var(--on-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Upload size={32} />
                 </div>
-                <div style={{ fontSize: '1.4rem', fontWeight: '800' }}>
-                  Upload Image to Get Started
+                <div style={{ fontSize: '1.25rem', fontWeight: '600', letterSpacing: '-0.01em' }}>
+                  Upload Image File
                 </div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', maxWidth: '400px' }}>
-                  Supports PNG, JPEG, WEBP, BMP, SVG. Processing runs 100% locally with ultra privacy.
+                <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: '1.5' }}>
+                  High-precision client-side utility engine. Supports PNG, JPEG, WEBP, BMP, SVG. Zero server data transmission.
                 </div>
                 <input
                   type="file"
@@ -145,12 +145,12 @@ export default function App() {
           ) : (
             <>
               {image && activeTool !== 'collage' && (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                  <div style={{ fontSize: '0.92rem', color: 'var(--text-muted)', fontWeight: '600' }}>
-                    Loaded Image: <strong style={{ color: 'var(--text-main)' }}>{image.name}</strong> ({image.width} × {image.height} px)
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', fontWeight: '500' }}>
+                    Active Image: <strong style={{ color: 'var(--text-primary)' }}>{image.name}</strong> ({image.width} × {image.height} px)
                   </div>
-                  <label className="btn-glass-secondary" style={{ cursor: 'pointer' }}>
-                    <Upload size={16} /> Load New Image
+                  <label className="btn-pure-secondary" style={{ cursor: 'pointer' }}>
+                    <Upload size={14} /> Change Source
                     <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
                   </label>
                 </div>
@@ -163,7 +163,7 @@ export default function App() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="glass-bottom-bar">
+      <nav className="pure-bottom-bar">
         {tools.map((tool) => {
           const Icon = tool.icon;
           return (
@@ -181,23 +181,23 @@ export default function App() {
 
       {/* Settings Modal */}
       {showSettings && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '440px', margin: 0 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="pure-panel" style={{ width: '100%', maxWidth: '420px', margin: 0 }}>
             <div className="panel-head">
-              <div className="panel-title-text"><Settings size={22} /> Settings & Preferences</div>
-              <button className="glass-btn-icon" onClick={() => setShowSettings(false)}><X size={18} /></button>
+              <div className="panel-title-text"><Settings size={18} /> System Settings</div>
+              <button className="pure-btn-icon" onClick={() => setShowSettings(false)}><X size={16} /></button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className="field-box">
-                <label className="field-label">Liquid Theme Engine</label>
-                <button className="btn-glass-secondary" onClick={toggleTheme}>
-                  {theme === 'dark' ? 'Switch to Liquid Light Theme' : 'Switch to Liquid Dark Theme'}
+                <label className="field-label">Color Theme Mode</label>
+                <button className="btn-pure-secondary" onClick={toggleTheme}>
+                  {theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Gallery Light Mode'}
                 </button>
               </div>
               <div className="field-box">
-                <label className="field-label">Privacy Assurance</label>
-                <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
-                  All image rendering, scaling, background keying, and filter processing is computed 100% inside your device's browser memory. Zero external server uploads.
+                <label className="field-label">Client Security Guarantee</label>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  PurePixel Image Suite operates exclusively on client-side memory. Images never touch an external cloud or server.
                 </div>
               </div>
             </div>
@@ -207,29 +207,29 @@ export default function App() {
 
       {/* History Modal */}
       {showHistory && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-          <div className="glass-panel" style={{ width: '100%', maxWidth: '520px', maxHeight: '80vh', overflowY: 'auto', margin: 0 }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div className="pure-panel" style={{ width: '100%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', margin: 0 }}>
             <div className="panel-head">
-              <div className="panel-title-text"><History size={22} /> Recent Export History ({history.length})</div>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button className="btn-glass-secondary" onClick={clearHistory}><Trash2 size={16} /></button>
-                <button className="glass-btn-icon" onClick={() => setShowHistory(false)}><X size={18} /></button>
+              <div className="panel-title-text"><History size={18} /> Export History ({history.length})</div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn-pure-secondary" onClick={clearHistory}><Trash2 size={14} /></button>
+                <button className="pure-btn-icon" onClick={() => setShowHistory(false)}><X size={16} /></button>
               </div>
             </div>
             {history.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px 0' }}>
-                No exports saved in history yet. Process images to see them here!
+              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '24px 0' }}>
+                No export records logged yet.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {history.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'var(--glass-card)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)' }}>
-                    <img src={item.url} alt={item.name} style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px' }} />
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--bg-subtle)', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+                    <img src={item.url} alt={item.name} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '2px' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.92rem', fontWeight: '700', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{item.tool} • {item.timestamp}</div>
+                      <div style={{ fontSize: '0.88rem', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.tool} • {item.timestamp}</div>
                     </div>
-                    <a href={item.url} download={item.name} className="glass-btn-icon"><Download size={18} /></a>
+                    <a href={item.url} download={item.name} className="pure-btn-icon"><Download size={14} /></a>
                   </div>
                 ))}
               </div>

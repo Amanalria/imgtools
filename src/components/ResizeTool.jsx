@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Maximize2, Download, Link, Unlink, RefreshCw, Settings2 } from 'lucide-react';
+import { Maximize2, Download, Link, Unlink, RefreshCw } from 'lucide-react';
 import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function ResizeTool({ image, onSaveHistory }) {
@@ -89,32 +89,32 @@ export default function ResizeTool({ image, onSaveHistory }) {
   };
 
   return (
-    <div className="glass-panel">
+    <div className="pure-panel">
       <div className="panel-head">
         <div className="panel-title-text">
-          <Maximize2 size={24} style={{ color: 'var(--accent-primary)' }} /> Image Resizer & Precision Scaler
+          <Maximize2 size={20} /> Image Resizer & Precision Scaler
         </div>
-        <button className="btn-glass-primary" onClick={handleDownload}>
-          <Download size={18} /> Download Resized
+        <button className="btn-pure-primary" onClick={handleDownload}>
+          <Download size={16} /> Export Resized Image
         </button>
       </div>
 
       <div className="settings-grid">
         <div className="field-box">
-          <label className="field-label">Width (Pixels)</label>
+          <label className="field-label">Width (px)</label>
           <input
             type="number"
-            className="glass-input"
+            className="pure-input"
             value={width}
             onChange={(e) => handleWidthChange(e.target.value)}
           />
         </div>
 
         <div className="field-box">
-          <label className="field-label">Height (Pixels)</label>
+          <label className="field-label">Height (px)</label>
           <input
             type="number"
-            className="glass-input"
+            className="pure-input"
             value={height}
             onChange={(e) => handleHeightChange(e.target.value)}
           />
@@ -123,9 +123,9 @@ export default function ResizeTool({ image, onSaveHistory }) {
         <div className="field-box">
           <label className="field-label">Aspect Lock</label>
           <button
-            className={`btn-glass-secondary ${keepAspect ? 'active' : ''}`}
+            className={`btn-pure-secondary ${keepAspect ? 'active' : ''}`}
             onClick={() => setKeepAspect(!keepAspect)}
-            style={{ height: '44px' }}
+            style={{ height: '42px' }}
           >
             {keepAspect ? <Link size={16} /> : <Unlink size={16} />}
             {keepAspect ? 'Aspect Locked' : 'Aspect Free'}
@@ -133,32 +133,21 @@ export default function ResizeTool({ image, onSaveHistory }) {
         </div>
 
         <div className="field-box">
-          <label className="field-label">Interpolation</label>
-          <select className="glass-select" value={algorithm} onChange={(e) => setAlgorithm(e.target.value)}>
-            <option value="high">High Quality Bicubic</option>
+          <label className="field-label">Interpolation Algorithm</label>
+          <select className="pure-select" value={algorithm} onChange={(e) => setAlgorithm(e.target.value)}>
+            <option value="high">High Precision Bicubic</option>
             <option value="medium">Bilinear Smooth</option>
-            <option value="low">Nearest Neighbor (Pixel Art)</option>
+            <option value="low">Nearest Neighbor</option>
           </select>
         </div>
 
         <div className="field-box">
-          <label className="field-label">Print DPI Preset</label>
-          <select className="glass-select" value={dpi} onChange={(e) => setDpi(e.target.value)}>
-            <option value="72">72 DPI (Web & Screen)</option>
+          <label className="field-label">Target DPI</label>
+          <select className="pure-select" value={dpi} onChange={(e) => setDpi(e.target.value)}>
+            <option value="72">72 DPI (Screen)</option>
             <option value="150">150 DPI (Draft Print)</option>
             <option value="300">300 DPI (High Res Print)</option>
           </select>
-        </div>
-
-        <div className="field-box">
-          <label className="field-label">Canvas Filler</label>
-          <input
-            type="color"
-            className="glass-input"
-            value={bgColor === 'transparent' ? '#ffffff' : bgColor}
-            onChange={(e) => setBgColor(e.target.value)}
-            style={{ height: '44px', padding: '4px' }}
-          />
         </div>
       </div>
 
@@ -170,24 +159,24 @@ export default function ResizeTool({ image, onSaveHistory }) {
           max="400"
           value={scalePercent}
           onChange={(e) => handleScaleSlider(parseInt(e.target.value))}
-          className="glass-slider"
+          className="pure-slider"
         />
       </div>
 
-      <div style={{ marginBottom: '24px' }}>
-        <label className="field-label" style={{ display: 'block', marginBottom: '10px' }}>Quick Social & Screen Presets:</label>
+      <div style={{ marginBottom: '20px' }}>
+        <label className="field-label" style={{ display: 'block', marginBottom: '8px' }}>Standard Dimension Presets:</label>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button className="glass-chip" onClick={() => applyPreset(1080, 1080)}>Instagram Square (1080x1080)</button>
-          <button className="glass-chip" onClick={() => applyPreset(1080, 1920)}>Story/Reel (1080x1920)</button>
-          <button className="glass-chip" onClick={() => applyPreset(1280, 720)}>YouTube HD (1280x720)</button>
-          <button className="glass-chip" onClick={() => applyPreset(1920, 1080)}>Full HD (1920x1080)</button>
-          <button className="glass-chip" onClick={() => applyPreset(3840, 2160)}>4K Ultra HD (3840x2160)</button>
+          <button className="pure-chip" onClick={() => applyPreset(1080, 1080)}>1080x1080 (Square)</button>
+          <button className="pure-chip" onClick={() => applyPreset(1080, 1920)}>1080x1920 (Story)</button>
+          <button className="pure-chip" onClick={() => applyPreset(1280, 720)}>1280x720 (HD)</button>
+          <button className="pure-chip" onClick={() => applyPreset(1920, 1080)}>1920x1080 (Full HD)</button>
+          <button className="pure-chip" onClick={() => applyPreset(3840, 2160)}>3840x2160 (4K)</button>
         </div>
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <button className="btn-glass-primary" onClick={processResize}>
-          <RefreshCw size={18} /> Apply Resized Dimensions
+        <button className="btn-pure-primary" onClick={processResize}>
+          <RefreshCw size={16} /> Apply Dimensions
         </button>
       </div>
 

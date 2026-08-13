@@ -9,11 +9,12 @@ import FiltersTool from './components/FiltersTool';
 import WatermarkTool from './components/WatermarkTool';
 import MetadataTool from './components/MetadataTool';
 import CollageTool from './components/CollageTool';
+import { triggerFileDownload } from './utils/downloadHelper';
 
 export default function App() {
   const [activeTool, setActiveTool] = useState(null); // null = Home Dashboard
-  const [searchQuery, setSearchQuery] = useState('');
-  const [theme, setTheme] = useState('light');
+  const [activeTab, setActiveTab] = useState('all'); // category filter
+  const [theme, setTheme] = useState('dark');
   const [image, setImage] = useState(null);
   const [history, setHistory] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -24,7 +25,7 @@ export default function App() {
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const handleFileUpload = (e) => {
@@ -60,168 +61,246 @@ export default function App() {
   const clearHistory = () => setHistory([]);
 
   const tools = [
-    { id: 'crop', name: 'Crop', icon: 'crop', component: CropTool },
-    { id: 'convert', name: 'Convert', icon: 'sync', component: ConvertTool },
-    { id: 'compress', name: 'Compress', icon: 'compress', component: CompressTool },
-    { id: 'resize', name: 'Resize', icon: 'aspect_ratio', component: ResizeTool },
-    { id: 'colorpicker', name: 'Color Picker', icon: 'colorize', component: ColorPickerTool },
-    { id: 'bgremover', name: 'BG Remover', icon: 'backspace', component: BgRemoverTool },
-    { id: 'filters', name: 'Filters', icon: 'filter_vintage', component: FiltersTool },
-    { id: 'watermark', name: 'Watermark', icon: 'branding_watermark', component: WatermarkTool },
-    { id: 'metadata', name: 'Metadata', icon: 'info', component: MetadataTool },
-    { id: 'collage', name: 'Collage', icon: 'dashboard_customize', component: CollageTool }
+    {
+      id: 'crop',
+      name: 'Crop & Rotate',
+      category: 'edit',
+      icon: 'crop',
+      desc: 'Freehand crop, aspect ratios, 360° rotation & circular avatar mask',
+      layoutClass: 'bento-hero', // 2x2 Large Featured
+      component: CropTool
+    },
+    {
+      id: 'bgremover',
+      name: 'BG Eraser & Keyer',
+      category: 'ai',
+      icon: 'backspace',
+      desc: 'Chroma key background remover with tolerance feathering',
+      badge: 'AI Magic',
+      layoutClass: 'bento-wide', // 2x1 Wide
+      component: BgRemoverTool
+    },
+    {
+      id: 'compress',
+      name: 'Smart Compressor',
+      category: 'privacy',
+      icon: 'compress',
+      desc: 'Target size compression with live KB savings gauge',
+      layoutClass: 'bento-tall', // 1x2 Tall
+      component: CompressTool
+    },
+    {
+      id: 'resize',
+      name: 'Resizer & DPI Scaler',
+      category: 'edit',
+      icon: 'aspect_ratio',
+      desc: 'Exact dimensions, percentage scaler & 300 DPI print quality',
+      layoutClass: '',
+      component: ResizeTool
+    },
+    {
+      id: 'convert',
+      name: 'Format Converter',
+      category: 'privacy',
+      icon: 'sync',
+      desc: 'Instant PNG, JPG, WEBP, BMP target format converter',
+      layoutClass: '',
+      component: ConvertTool
+    },
+    {
+      id: 'colorpicker',
+      name: 'Palette & Eyedropper',
+      category: 'ai',
+      icon: 'colorize',
+      desc: 'Precision color picker & 10-color dominant palette generator',
+      layoutClass: '',
+      component: ColorPickerTool
+    },
+    {
+      id: 'filters',
+      name: 'Filters & Effects Studio',
+      category: 'ai',
+      icon: 'filter_vintage',
+      desc: 'Vintage, Cyberpunk, Nordic Chill presets + adjustment sliders',
+      layoutClass: '',
+      component: FiltersTool
+    },
+    {
+      id: 'watermark',
+      name: 'Brand Watermark',
+      category: 'edit',
+      icon: 'branding_watermark',
+      desc: 'Text/Logo watermark with single anchor & repeat tile pattern',
+      layoutClass: '',
+      component: WatermarkTool
+    },
+    {
+      id: 'metadata',
+      name: 'EXIF Privacy Inspector',
+      category: 'privacy',
+      icon: 'info',
+      desc: 'View camera EXIF metadata & 1-click GPS location stripper',
+      layoutClass: '',
+      component: MetadataTool
+    },
+    {
+      id: 'collage',
+      name: 'Collage Grid Maker',
+      category: 'collage',
+      icon: 'dashboard_customize',
+      desc: 'Combine multiple images in 2x2, 3x3 grids with corner rounder',
+      layoutClass: 'bento-wide',
+      component: CollageTool
+    }
   ];
 
-  const filteredTools = tools.filter((t) =>
-    t.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const categoryTabs = [
+    { id: 'all', label: '✨ All Tools' },
+    { id: 'edit', label: '✂️ Crop & Edit' },
+    { id: 'ai', label: '🪄 AI & Filters' },
+    { id: 'privacy', label: '🔒 Privacy & Convert' },
+    { id: 'collage', label: '🧩 Collage Grid' }
+  ];
+
+  const filteredTools = tools.filter(
+    (t) => activeTab === 'all' || t.category === activeTab
   );
 
-  const ActiveComponent = tools.find((t) => t.id === activeTool)?.component;
+  const activeToolObj = tools.find((t) => t.id === activeTool);
+  const ActiveComponent = activeToolObj?.component;
 
   return (
-    <div className="app-container">
-      {/* TopAppBar */}
-      <header className="top-header">
-        <div className="header-brand">
-          <span
-            className="material-symbols-outlined hover:bg-surface-container p-2 rounded-full cursor-pointer transition-colors duration-200"
-            onClick={() => setActiveTool(null)}
-            title="Dashboard Grid View"
-          >
-            grid_view
-          </span>
-          <h1
-            className="brand-title cursor-pointer"
-            onClick={() => setActiveTool(null)}
-          >
-            ImageTool Pro
-          </h1>
+    <div className="app-viewport">
+      {/* Floating Glass Header Bar */}
+      <header className="floating-header">
+        <div className="brand-badge" onClick={() => setActiveTool(null)}>
+          <div className="brand-logo-glow">
+            <span className="material-symbols-outlined">auto_awesome</span>
+          </div>
+          <div className="brand-title-text">PurePixel Pro</div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {activeTool && (
+        <div className="header-action-group">
+          {activeTool ? (
             <>
               <button
-                className="header-action-btn secondary"
-                onClick={() => setImage(null)}
+                className="glass-btn"
+                onClick={() => setActiveTool(null)}
               >
-                Reset
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>grid_view</span>
+                All Tools
               </button>
               <button
-                className="header-action-btn primary"
+                className="glass-btn-primary"
                 onClick={() => {
-                  const btn = document.querySelector('.btn-pure-primary, .btn-glass-primary');
-                  if (btn) btn.click();
+                  const applyBtn = document.querySelector('.btn-pure-primary, .btn-glass-primary');
+                  if (applyBtn) {
+                    applyBtn.click();
+                  } else {
+                    alert('Please select or edit an image to download.');
+                  }
                 }}
               >
-                Apply & Download
+                <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+                Download
               </button>
             </>
+          ) : (
+            <label className="glass-btn-primary" style={{ cursor: 'pointer' }}>
+              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>add_photo_alternate</span>
+              Open Image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  handleFileUpload(e);
+                  setActiveTool('crop'); // Open Crop tool by default when image selected
+                }}
+                style={{ display: 'none' }}
+              />
+            </label>
           )}
 
-          <span
-            className="material-symbols-outlined text-secondary cursor-pointer hover:bg-surface-container p-2 rounded-full transition-colors duration-200"
-            onClick={() => setShowSettings(true)}
-            title="Settings"
-          >
-            settings
-          </span>
+          <button className="glass-btn" onClick={() => setShowSettings(true)} title="Settings">
+            <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>settings</span>
+          </button>
         </div>
       </header>
 
-      <div className="main-layout">
-        {/* NavigationDrawer (Desktop Only) */}
-        <aside className="sidebar-drawer">
-          <div className="sidebar-title">Image Toolkit</div>
-          <nav className="nav-list">
-            <button
-              className={`nav-item-btn ${activeTool === null ? 'active' : ''}`}
-              onClick={() => setActiveTool(null)}
-            >
-              <span className="material-symbols-outlined">grid_view</span>
-              <span>All Tools (Dashboard)</span>
-            </button>
-
-            {tools.map((tool) => (
-              <button
-                key={tool.id}
-                className={`nav-item-btn ${activeTool === tool.id ? 'active' : ''}`}
-                onClick={() => setActiveTool(tool.id)}
-              >
-                <span className="material-symbols-outlined">{tool.icon}</span>
-                <span>{tool.name}</span>
-              </button>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content Area */}
-        <main className="workspace-container">
+      {/* Workspace Area with Safe Top & Bottom Padding */}
+      <main className="main-content-scroll">
+        <div className="container-inner">
           {activeTool === null ? (
             /* Home Bento Dashboard View */
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-              {/* Search & Filter Bar */}
-              <div className="search-container">
-                <div className="search-input-wrapper">
-                  <span className="material-symbols-outlined">search</span>
-                  <input
-                    className="search-input"
-                    placeholder="Search tools..."
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <button className="filter-btn">
-                  <span className="material-symbols-outlined">tune</span>
-                  Filters
-                </button>
+            <>
+              {/* Category Filter Tabs */}
+              <div className="category-tabs-bar">
+                {categoryTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    className={`tab-pill ${activeTab === tab.id ? 'active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
               </div>
 
-              {/* Upload Zone on Dashboard */}
-              <div className="pure-panel" style={{ textAlign: 'center', marginBottom: '32px', padding: '40px 20px' }}>
-                <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--primary)' }}>add_photo_alternate</span>
-                  <div style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary)' }}>
-                    Upload Source Image
-                  </div>
-                  <div style={{ fontSize: '0.88rem', color: 'var(--secondary)' }}>
-                    Supports PNG, JPG, WEBP, BMP, SVG (Client-side fast privacy processing)
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
-
-              {/* Bento Grid for Tools */}
-              <div className="bento-grid">
+              {/* Asymmetric Bento Grid (Chota Bda Layout) */}
+              <div className="asymmetric-bento-grid">
                 {filteredTools.map((tool) => (
                   <div
                     key={tool.id}
-                    className="bento-card group"
+                    className={`bento-box ${tool.layoutClass}`}
                     onClick={() => setActiveTool(tool.id)}
                   >
-                    <span className="material-symbols-outlined">{tool.icon}</span>
-                    <span className="bento-card-title">{tool.name}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div className="bento-icon-wrapper">
+                        <span className="material-symbols-outlined">{tool.icon}</span>
+                      </div>
+                      {tool.badge && <span className="badge-pill">{tool.badge}</span>}
+                    </div>
+
+                    <div>
+                      <div className="bento-title">{tool.name}</div>
+                      <div className="bento-desc">{tool.desc}</div>
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </>
           ) : (
-            /* Active Tool View */
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            /* Dedicated Tool View */
+            <div>
+              {/* Tool Header Breadcrumb */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button className="glass-btn" onClick={() => setActiveTool(null)}>
+                    <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>arrow_back</span>
+                    Back
+                  </button>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                    {activeToolObj?.name}
+                  </h2>
+                </div>
+
+                {image && activeTool !== 'collage' && (
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Source: <strong style={{ color: 'var(--text-primary)' }}>{image.name}</strong> ({image.width}×{image.height}px)
+                  </div>
+                )}
+              </div>
+
               {!image && activeTool !== 'collage' ? (
                 <div className="pure-panel" style={{ textAlign: 'center', padding: '60px 20px' }}>
                   <label style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-                    <span className="material-symbols-outlined" style={{ fontSize: '48px', color: 'var(--primary)' }}>add_photo_alternate</span>
-                    <div style={{ fontSize: '1.2rem', fontWeight: '600', color: 'var(--primary)' }}>
-                      Upload Source Image for {tools.find((t) => t.id === activeTool)?.name}
+                    <div className="brand-logo-glow" style={{ width: '64px', height: '64px', borderRadius: '50%' }}>
+                      <span className="material-symbols-outlined" style={{ fontSize: '32px' }}>add_photo_alternate</span>
                     </div>
-                    <div style={{ fontSize: '0.88rem', color: 'var(--secondary)' }}>
+                    <div style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                      Upload Image to use {activeToolObj?.name}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       Supports PNG, JPG, WEBP, BMP, SVG
                     </div>
                     <input
@@ -233,71 +312,77 @@ export default function App() {
                   </label>
                 </div>
               ) : (
-                <>
-                  {image && activeTool !== 'collage' && (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-                      <div style={{ fontSize: '0.88rem', color: 'var(--secondary)' }}>
-                        Source Image: <strong style={{ color: 'var(--primary)' }}>{image.name}</strong> ({image.width} × {image.height} px)
-                      </div>
-                      <label className="header-action-btn secondary" style={{ cursor: 'pointer' }}>
-                        Change Image
-                        <input type="file" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
-                      </label>
-                    </div>
-                  )}
-
-                  <ActiveComponent image={image} onSaveHistory={saveToHistory} />
-                </>
+                <ActiveComponent image={image} onSaveHistory={saveToHistory} />
               )}
             </div>
           )}
-        </main>
-      </div>
+        </div>
+      </main>
 
-      {/* Mobile Bottom Navigation Bar */}
-      <nav className="mobile-bottom-nav">
-        <button className={`mobile-nav-link ${activeTool === null ? 'active' : ''}`} onClick={() => setActiveTool(null)}>
-          <span className="material-symbols-outlined">build</span>
-          <span>Tools</span>
+      {/* Floating Glass Bottom Nav Bar */}
+      <nav className="floating-bottom-nav">
+        <button
+          className={`nav-tab-btn ${activeTool === null ? 'active' : ''}`}
+          onClick={() => setActiveTool(null)}
+        >
+          <span className="material-symbols-outlined">grid_view</span>
+          <span>Home</span>
         </button>
 
-        <button className="mobile-nav-link" onClick={() => setActiveTool('compress')}>
-          <span className="material-symbols-outlined">layers</span>
-          <span>Batch</span>
+        <button
+          className={`nav-tab-btn ${activeTool === 'crop' ? 'active' : ''}`}
+          onClick={() => setActiveTool('crop')}
+        >
+          <span className="material-symbols-outlined">crop</span>
+          <span>Crop</span>
         </button>
 
-        <button className="mobile-nav-link" onClick={() => setShowHistory(true)}>
+        <button
+          className={`nav-tab-btn ${activeTool === 'convert' ? 'active' : ''}`}
+          onClick={() => setActiveTool('convert')}
+        >
+          <span className="material-symbols-outlined">sync</span>
+          <span>Convert</span>
+        </button>
+
+        <button
+          className="nav-tab-btn"
+          onClick={() => setShowHistory(true)}
+        >
           <span className="material-symbols-outlined">history</span>
           <span>History</span>
         </button>
 
-        <button className="mobile-nav-link" onClick={() => setShowSettings(true)}>
-          <span className="material-symbols-outlined">person</span>
+        <button
+          className="nav-tab-btn"
+          onClick={() => setShowSettings(true)}
+        >
+          <span className="material-symbols-outlined">settings</span>
           <span>Settings</span>
         </button>
       </nav>
 
-      {/* Settings Modal */}
+      {/* System Settings Modal */}
       {showSettings && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="pure-panel" style={{ width: '100%', maxWidth: '420px', margin: 0 }}>
             <div className="panel-head">
               <div className="panel-title-text">
-                <span className="material-symbols-outlined">settings</span> System Settings
+                <span className="material-symbols-outlined">settings</span> Settings & Preferences
               </div>
-              <button className="header-action-btn secondary" onClick={() => setShowSettings(false)}>✕</button>
+              <button className="glass-btn" onClick={() => setShowSettings(false)}>✕</button>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div className="field-box">
-                <label className="field-label">Color Theme Mode</label>
-                <button className="header-action-btn secondary" onClick={toggleTheme}>
-                  {theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Gallery Light Mode'}
+                <label className="field-label">Visual Theme Mode</label>
+                <button className="glass-btn" onClick={toggleTheme} style={{ width: '100%', justifyContent: 'center', padding: '12px' }}>
+                  {theme === 'dark' ? '☀️ Switch to Light Theme' : '🌙 Switch to Dark OLED Theme'}
                 </button>
               </div>
               <div className="field-box">
-                <label className="field-label">Security & Privacy</label>
-                <div style={{ fontSize: '0.85rem', color: 'var(--secondary)', lineHeight: '1.5' }}>
-                  ImageTool Pro runs 100% locally inside client-side browser memory. Zero server uploads.
+                <label className="field-label">Engine Privacy</label>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                  100% Client-Side In-Memory Processing. Your photos never leave your device.
                 </div>
               </div>
             </div>
@@ -307,31 +392,37 @@ export default function App() {
 
       {/* History Modal */}
       {showHistory && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(12px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
           <div className="pure-panel" style={{ width: '100%', maxWidth: '500px', maxHeight: '80vh', overflowY: 'auto', margin: 0 }}>
             <div className="panel-head">
               <div className="panel-title-text">
                 <span className="material-symbols-outlined">history</span> Export History ({history.length})
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="header-action-btn secondary" onClick={clearHistory}>Clear</button>
-                <button className="header-action-btn secondary" onClick={() => setShowHistory(false)}>✕</button>
+                <button className="glass-btn" onClick={clearHistory}>Clear</button>
+                <button className="glass-btn" onClick={() => setShowHistory(false)}>✕</button>
               </div>
             </div>
             {history.length === 0 ? (
-              <div style={{ textAlign: 'center', color: 'var(--secondary)', padding: '24px 0' }}>
-                No export records logged yet.
+              <div style={{ textAlign: 'center', color: 'var(--text-secondary)', padding: '30px 0' }}>
+                No exports saved yet in this session.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {history.map((item) => (
-                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--surface-container-low)', padding: '10px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--surface-border)' }}>
-                    <img src={item.url} alt={item.name} style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '4px' }} />
+                  <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'rgba(255,255,255,0.05)', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)' }}>
+                    <img src={item.url} alt={item.name} style={{ width: '52px', height: '52px', objectFit: 'cover', borderRadius: '8px' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: '0.88rem', fontWeight: '600', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--secondary)' }}>{item.tool} • {item.timestamp}</div>
+                      <div style={{ fontSize: '0.9rem', fontWeight: '700', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{item.name}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{item.tool} • {item.timestamp}</div>
                     </div>
-                    <a href={item.url} download={item.name} className="header-action-btn secondary">↓</a>
+                    <button
+                      className="glass-btn-primary"
+                      onClick={() => triggerFileDownload(item.url, item.name)}
+                      style={{ padding: '8px 12px' }}
+                    >
+                      ↓
+                    </button>
                   </div>
                 ))}
               </div>

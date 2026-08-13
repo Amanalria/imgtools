@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { RefreshCw, Download } from 'lucide-react';
+import { RefreshCw, Download, Layers } from 'lucide-react';
+import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function ConvertTool({ image, onSaveHistory }) {
   const [targetFormat, setTargetFormat] = useState('image/webp');
-  const [quality, setQuality] = useState(90);
+  const [quality, setQuality] = useState(92);
+  const [bgFill, setBgFill] = useState('#FFFFFF');
   const [convertedUrl, setConvertedUrl] = useState(null);
 
   const formatExt = {
@@ -24,7 +26,7 @@ export default function ConvertTool({ image, onSaveHistory }) {
       const ctx = canvas.getContext('2d');
 
       if (targetFormat === 'image/jpeg') {
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = bgFill;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
@@ -39,62 +41,68 @@ export default function ConvertTool({ image, onSaveHistory }) {
     };
   };
 
-  const downloadImage = () => {
-    if (!convertedUrl) return;
+  const handleDownload = () => {
+    convertImage();
     const ext = formatExt[targetFormat] || 'png';
-    const link = document.createElement('a');
-    link.download = `converted_image.${ext}`;
-    link.href = convertedUrl;
-    link.click();
+    triggerFileDownload(convertedUrl || image?.src, `converted_image.${ext}`);
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <RefreshCw size={22} /> Image Format Converter
+    <div className="glass-panel">
+      <div className="panel-head">
+        <div className="panel-title-text">
+          <RefreshCw size={24} style={{ color: 'var(--accent-primary)' }} /> Format Converter & Quality Optimizer
         </div>
-        <button className="btn-primary" onClick={downloadImage}>
-          <Download size={18} /> Download
+        <button className="btn-glass-primary" onClick={handleDownload}>
+          <Download size={18} /> Download Converted File
         </button>
       </div>
 
-      <div className="control-grid">
-        <div className="form-group">
-          <label>Target Format</label>
-          <select
-            className="form-select"
-            value={targetFormat}
-            onChange={(e) => setTargetFormat(e.target.value)}
-          >
-            <option value="image/webp">WEBP (Modern & Lightweight)</option>
-            <option value="image/png">PNG (Lossless & Transparent)</option>
-            <option value="image/jpeg">JPEG / JPG (Universal Standard)</option>
-            <option value="image/bmp">BMP (Bitmap Standard)</option>
+      <div className="settings-grid">
+        <div className="field-box">
+          <label className="field-label">Target Format</label>
+          <select className="glass-select" value={targetFormat} onChange={(e) => setTargetFormat(e.target.value)}>
+            <option value="image/webp">WEBP (Modern Lightweight Web Standard)</option>
+            <option value="image/png">PNG (Lossless High Quality + Transparency)</option>
+            <option value="image/jpeg">JPEG / JPG (Universal Photo Format)</option>
+            <option value="image/bmp">BMP (Raw Bitmap Graphics)</option>
           </select>
         </div>
 
-        <div className="form-group">
-          <label>Output Quality: {quality}%</label>
+        <div className="field-box">
+          <label className="field-label">Quality Compression Level: {quality}%</label>
           <input
             type="range"
             min="10"
             max="100"
             value={quality}
             onChange={(e) => setQuality(parseInt(e.target.value))}
-            className="range-slider"
+            className="glass-slider"
           />
         </div>
+
+        {targetFormat === 'image/jpeg' && (
+          <div className="field-box">
+            <label className="field-label">Alpha Background Fill</label>
+            <input
+              type="color"
+              className="glass-input"
+              value={bgFill}
+              onChange={(e) => setBgFill(e.target.value)}
+              style={{ height: '44px', padding: '4px' }}
+            />
+          </div>
+        )}
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button className="btn-primary" onClick={convertImage}>
-          <RefreshCw size={18} /> Convert Image Format
+      <div style={{ marginBottom: '22px' }}>
+        <button className="btn-glass-primary" onClick={convertImage}>
+          <RefreshCw size={18} /> Convert Format
         </button>
       </div>
 
-      <div className="preview-container">
-        <img src={convertedUrl || image?.src} alt="Converted Preview" className="preview-image" />
+      <div className="canvas-preview-box">
+        <img src={convertedUrl || image?.src} alt="Converted Preview" className="preview-rendered-img" />
       </div>
     </div>
   );

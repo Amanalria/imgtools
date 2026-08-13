@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Sliders, Download, RotateCcw } from 'lucide-react';
+import { Sliders, Download, RotateCcw, Sparkles } from 'lucide-react';
+import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function FiltersTool({ image, onSaveHistory }) {
   const [brightness, setBrightness] = useState(100);
@@ -31,20 +32,25 @@ export default function FiltersTool({ image, onSaveHistory }) {
   const applyPreset = (type) => {
     resetFilters();
     if (type === 'vintage') {
-      setSepia(50);
-      setContrast(110);
+      setSepia(60);
+      setContrast(115);
       setBrightness(105);
     } else if (type === 'noir') {
       setGrayscale(100);
-      setContrast(140);
+      setContrast(145);
     } else if (type === 'cyberpunk') {
-      setSaturate(180);
+      setSaturate(190);
       setHue(45);
-      setContrast(120);
+      setContrast(130);
     } else if (type === 'dramatic') {
-      setContrast(150);
-      setSaturate(130);
+      setContrast(160);
+      setSaturate(140);
       setBrightness(90);
+    } else if (type === 'nordic') {
+      setSaturate(70);
+      setBrightness(110);
+      setContrast(105);
+      setHue(190);
     }
   };
 
@@ -70,81 +76,87 @@ export default function FiltersTool({ image, onSaveHistory }) {
     };
   };
 
-  const downloadImage = () => {
+  const handleDownload = () => {
     exportFilteredImage();
-    const link = document.createElement('a');
-    link.download = 'filtered_image.png';
-    link.href = filteredUrl || image?.src;
-    link.click();
+    triggerFileDownload(filteredUrl || image?.src, 'filtered_image.png');
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <Sliders size={22} /> Filters & Effects Studio
+    <div className="glass-panel">
+      <div className="panel-head">
+        <div className="panel-title-text">
+          <Sliders size={24} style={{ color: 'var(--accent-primary)' }} /> Pro Filters & Effects Lab
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn-secondary" onClick={resetFilters}>
-            <RotateCcw size={16} /> Reset
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-glass-secondary" onClick={resetFilters}>
+            <RotateCcw size={16} /> Reset All
           </button>
-          <button className="btn-primary" onClick={downloadImage}>
-            <Download size={18} /> Download
+          <button className="btn-glass-primary" onClick={handleDownload}>
+            <Download size={18} /> Download Filtered Image
           </button>
         </div>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '8px' }}>
-          Filter Presets:
-        </label>
+      <div style={{ marginBottom: '24px' }}>
+        <label className="field-label" style={{ display: 'block', marginBottom: '10px' }}>Liquid Filter Presets:</label>
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <button className="preset-chip" onClick={() => resetFilters()}>Original</button>
-          <button className="preset-chip" onClick={() => applyPreset('vintage')}>Vintage</button>
-          <button className="preset-chip" onClick={() => applyPreset('noir')}>Noir B&W</button>
-          <button className="preset-chip" onClick={() => applyPreset('cyberpunk')}>Cyberpunk</button>
-          <button className="preset-chip" onClick={() => applyPreset('dramatic')}>Dramatic</button>
+          <button className="glass-chip" onClick={() => resetFilters()}><Sparkles size={14} /> Normal</button>
+          <button className="glass-chip" onClick={() => applyPreset('vintage')}>Vintage Film</button>
+          <button className="glass-chip" onClick={() => applyPreset('noir')}>Noir B&W</button>
+          <button className="glass-chip" onClick={() => applyPreset('cyberpunk')}>Cyberpunk Glow</button>
+          <button className="glass-chip" onClick={() => applyPreset('dramatic')}>HDR Dramatic</button>
+          <button className="glass-chip" onClick={() => applyPreset('nordic')}>Nordic Chill</button>
         </div>
       </div>
 
-      <div className="control-grid">
-        <div className="form-group">
-          <label>Brightness: {brightness}%</label>
-          <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} className="range-slider" />
+      <div className="settings-grid">
+        <div className="field-box">
+          <label className="field-label">Brightness: {brightness}%</label>
+          <input type="range" min="0" max="200" value={brightness} onChange={(e) => setBrightness(e.target.value)} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Contrast: {contrast}%</label>
-          <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Contrast: {contrast}%</label>
+          <input type="range" min="0" max="200" value={contrast} onChange={(e) => setContrast(e.target.value)} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Saturation: {saturation}%</label>
-          <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturate(e.target.value)} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Saturation: {saturation}%</label>
+          <input type="range" min="0" max="200" value={saturation} onChange={(e) => setSaturate(e.target.value)} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Blur: {blur}px</label>
-          <input type="range" min="0" max="15" value={blur} onChange={(e) => setBlur(e.target.value)} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Blur Radius: {blur}px</label>
+          <input type="range" min="0" max="20" value={blur} onChange={(e) => setBlur(e.target.value)} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Grayscale: {grayscale}%</label>
-          <input type="range" min="0" max="100" value={grayscale} onChange={(e) => setGrayscale(e.target.value)} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Hue Shift: {hue}°</label>
+          <input type="range" min="0" max="360" value={hue} onChange={(e) => setHue(e.target.value)} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Sepia: {sepia}%</label>
-          <input type="range" min="0" max="100" value={sepia} onChange={(e) => setSepia(e.target.value)} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Grayscale: {grayscale}%</label>
+          <input type="range" min="0" max="100" value={grayscale} onChange={(e) => setGrayscale(e.target.value)} className="glass-slider" />
+        </div>
+
+        <div className="field-box">
+          <label className="field-label">Sepia Warmth: {sepia}%</label>
+          <input type="range" min="0" max="100" value={sepia} onChange={(e) => setSepia(e.target.value)} className="glass-slider" />
+        </div>
+
+        <div className="field-box">
+          <label className="field-label">Invert Negative: {invert}%</label>
+          <input type="range" min="0" max="100" value={invert} onChange={(e) => setInvert(e.target.value)} className="glass-slider" />
         </div>
       </div>
 
-      <div className="preview-container">
+      <div className="canvas-preview-box">
         <img
           src={image?.src}
           alt="Filtered Preview"
-          className="preview-image"
-          style={{ filter: getFilterStyle(), transition: 'filter 0.1s ease' }}
+          className="preview-rendered-img"
+          style={{ filter: getFilterStyle() }}
         />
       </div>
     </div>

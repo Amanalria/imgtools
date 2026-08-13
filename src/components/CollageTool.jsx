@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { LayoutGrid, Download, Plus, Trash2 } from 'lucide-react';
+import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function CollageTool({ onSaveHistory }) {
   const [images, setImages] = useState([]);
-  const [gap, setGap] = useState(10);
-  const [radius, setRadius] = useState(8);
-  const [bgColor, setBgColor] = useState('#1e293b');
+  const [gap, setGap] = useState(12);
+  const [radius, setRadius] = useState(12);
+  const [bgColor, setBgColor] = useState('#0f172a');
   const [layout, setLayout] = useState('2x1');
   const [collageUrl, setCollageUrl] = useState(null);
 
@@ -68,7 +69,6 @@ export default function CollageTool({ onSaveHistory }) {
         ctx.roundRect(x, y, cellW, cellH, radius);
         ctx.clip();
 
-        // Aspect fill draw
         const imgRatio = img.width / img.height;
         const cellRatio = cellW / cellH;
         let dw = cellW;
@@ -89,50 +89,47 @@ export default function CollageTool({ onSaveHistory }) {
 
         loadedCount++;
         if (loadedCount === Math.min(images.length, cols * rows)) {
-          const url = canvas.toDataURL('image/png');
-          setCollageUrl(url);
+          const dataUrl = canvas.toDataURL('image/png');
+          setCollageUrl(dataUrl);
           if (onSaveHistory) {
-            onSaveHistory({ tool: 'Collage Maker', url, name: 'collage.png' });
+            onSaveHistory({ tool: 'Collage Maker', url: dataUrl, name: 'collage.png' });
           }
         }
       };
     });
   };
 
-  const downloadImage = () => {
-    if (!collageUrl) return;
-    const link = document.createElement('a');
-    link.download = 'collage.png';
-    link.href = collageUrl;
-    link.click();
+  const handleDownload = () => {
+    generateCollage();
+    triggerFileDownload(collageUrl, 'collage.png');
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <LayoutGrid size={22} /> Collage & Photo Grid Maker
+    <div className="glass-panel">
+      <div className="panel-head">
+        <div className="panel-title-text">
+          <LayoutGrid size={24} style={{ color: 'var(--accent-primary)' }} /> Photo Collage & Grid Studio
         </div>
-        <button className="btn-primary" onClick={downloadImage} disabled={!collageUrl}>
-          <Download size={18} /> Download
+        <button className="btn-glass-primary" onClick={handleDownload} disabled={!collageUrl}>
+          <Download size={18} /> Download Collage Grid
         </button>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <label className="btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex' }}>
-          <Plus size={18} /> Add Photos ({images.length} added)
+      <div style={{ marginBottom: '22px' }}>
+        <label className="btn-glass-secondary" style={{ cursor: 'pointer' }}>
+          <Plus size={18} /> Upload Multiple Photos ({images.length} added)
           <input type="file" multiple accept="image/*" onChange={handleMultiUpload} style={{ display: 'none' }} />
         </label>
       </div>
 
       {images.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginBottom: '20px', paddingBottom: '8px' }}>
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', marginBottom: '24px', paddingBottom: '8px' }}>
           {images.map((src, idx) => (
-            <div key={idx} style={{ position: 'relative', width: '70px', height: '70px', flexShrink: 0 }}>
-              <img src={src} alt={`Uploaded ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
+            <div key={idx} style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
+              <img src={src} alt={`Uploaded ${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px', border: '1px solid var(--glass-border)' }} />
               <button
                 onClick={() => removeImage(idx)}
-                style={{ position: 'absolute', top: '-4px', right: '-4px', background: 'var(--danger-color)', color: '#fff', border: 'none', borderRadius: '50%', width: '20px', height: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', top: '-6px', right: '-6px', background: 'var(--danger-color, #ef4444)', color: '#fff', border: 'none', borderRadius: '50%', width: '22px', height: '22px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <Trash2 size={12} />
               </button>
@@ -141,44 +138,44 @@ export default function CollageTool({ onSaveHistory }) {
         </div>
       )}
 
-      <div className="control-grid">
-        <div className="form-group">
-          <label>Layout Grid</label>
-          <select className="form-select" value={layout} onChange={(e) => setLayout(e.target.value)}>
-            <option value="2x1">2 Columns (2x1)</option>
-            <option value="3x1">3 Columns (3x1)</option>
+      <div className="settings-grid">
+        <div className="field-box">
+          <label className="field-label">Grid Layout Preset</label>
+          <select className="glass-select" value={layout} onChange={(e) => setLayout(e.target.value)}>
+            <option value="2x1">2 Columns Split (2x1)</option>
+            <option value="3x1">3 Columns Split (3x1)</option>
             <option value="2x2">2x2 Grid (4 Photos)</option>
             <option value="3x3">3x3 Grid (9 Photos)</option>
           </select>
         </div>
 
-        <div className="form-group">
-          <label>Grid Spacing: {gap}px</label>
-          <input type="range" min="0" max="30" value={gap} onChange={(e) => setGap(parseInt(e.target.value))} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Grid Gap: {gap}px</label>
+          <input type="range" min="0" max="40" value={gap} onChange={(e) => setGap(parseInt(e.target.value))} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Corner Radius: {radius}px</label>
-          <input type="range" min="0" max="30" value={radius} onChange={(e) => setRadius(parseInt(e.target.value))} className="range-slider" />
+        <div className="field-box">
+          <label className="field-label">Corner Rounding: {radius}px</label>
+          <input type="range" min="0" max="40" value={radius} onChange={(e) => setRadius(parseInt(e.target.value))} className="glass-slider" />
         </div>
 
-        <div className="form-group">
-          <label>Background Color</label>
-          <input type="color" className="form-control" value={bgColor} onChange={(e) => setBgColor(e.target.value)} style={{ height: '42px', padding: '2px 6px' }} />
+        <div className="field-box">
+          <label className="field-label">Canvas Background Fill</label>
+          <input type="color" className="glass-input" value={bgColor} onChange={(e) => setBgColor(e.target.value)} style={{ height: '44px', padding: '4px' }} />
         </div>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button className="btn-primary" onClick={generateCollage} disabled={images.length === 0}>
+      <div style={{ marginBottom: '22px' }}>
+        <button className="btn-glass-primary" onClick={generateCollage} disabled={images.length === 0}>
           <LayoutGrid size={18} /> Render Photo Collage
         </button>
       </div>
 
-      <div className="preview-container">
+      <div className="canvas-preview-box">
         {collageUrl ? (
-          <img src={collageUrl} alt="Collage Preview" className="preview-image" />
+          <img src={collageUrl} alt="Collage Preview" className="preview-rendered-img" />
         ) : (
-          <span style={{ color: 'var(--text-secondary)' }}>Upload 2 or more photos to build a collage grid</span>
+          <span style={{ color: 'var(--text-muted)' }}>Upload photos to build a liquid glass photo collage</span>
         )}
       </div>
     </div>

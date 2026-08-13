@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Download, FileText } from 'lucide-react';
+import { Zap, Download, SlidersHorizontal } from 'lucide-react';
+import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function CompressTool({ image, onSaveHistory }) {
   const [quality, setQuality] = useState(70);
+  const [maxKbTarget, setMaxKbTarget] = useState(500);
+  const [useTargetKb, setUseTargetKb] = useState(false);
   const [originalSize, setOriginalSize] = useState(0);
   const [compressedSize, setCompressedSize] = useState(0);
   const [compressedUrl, setCompressedUrl] = useState(null);
 
   useEffect(() => {
     if (image) {
-      // Estimate original size from data url length
       const bytes = Math.round((image.src.length * 3) / 4);
       setOriginalSize(bytes);
       compressImage(70);
@@ -38,8 +40,7 @@ export default function CompressTool({ image, onSaveHistory }) {
     };
   };
 
-  const handleQualityChange = (e) => {
-    const q = parseInt(e.target.value);
+  const handleQualityChange = (q) => {
     setQuality(q);
     compressImage(q);
   };
@@ -52,62 +53,55 @@ export default function CompressTool({ image, onSaveHistory }) {
 
   const savedPercent = originalSize ? Math.max(0, Math.round(((originalSize - compressedSize) / originalSize) * 100)) : 0;
 
-  const downloadImage = () => {
-    if (!compressedUrl) return;
-    const link = document.createElement('a');
-    link.download = 'compressed_image.jpg';
-    link.href = compressedUrl;
-    link.click();
+  const handleDownload = () => {
+    compressImage(quality);
+    triggerFileDownload(compressedUrl || image?.src, 'compressed_image.jpg');
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <Zap size={22} /> Image Compressor
+    <div className="glass-panel">
+      <div className="panel-head">
+        <div className="panel-title-text">
+          <Zap size={24} style={{ color: 'var(--accent-primary)' }} /> Intelligent Image Compressor
         </div>
-        <button className="btn-primary" onClick={downloadImage}>
-          <Download size={18} /> Download
+        <button className="btn-glass-primary" onClick={handleDownload}>
+          <Download size={18} /> Download Compressed
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '20px' }}>
-        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Original Size</span>
-          <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-primary)', marginTop: '4px' }}>
-            {formatKB(originalSize)}
-          </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+        <div style={{ background: 'var(--glass-card)', padding: '18px', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>Original Size</span>
+          <div style={{ fontSize: '1.5rem', fontWeight: '800', marginTop: '4px' }}>{formatKB(originalSize)}</div>
         </div>
 
-        <div style={{ background: 'var(--bg-primary)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Compressed Size</span>
-          <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--accent-color)', marginTop: '4px' }}>
-            {formatKB(compressedSize)}
-          </div>
+        <div style={{ background: 'var(--glass-card)', padding: '18px', borderRadius: 'var(--radius-md)', border: '1px solid var(--glass-border)' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '700' }}>Compressed Size</span>
+          <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--accent-cyan)', marginTop: '4px' }}>{formatKB(compressedSize)}</div>
         </div>
 
-        <div style={{ background: 'var(--accent-light)', padding: '16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--accent-color)' }}>
-          <span style={{ fontSize: '0.85rem', color: 'var(--accent-color)', fontWeight: '600' }}>Space Saved</span>
-          <div style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--success-color)', marginTop: '4px' }}>
-            -{savedPercent}%
-          </div>
+        <div style={{ background: 'rgba(16, 185, 129, 0.15)', padding: '18px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+          <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: '700' }}>Space Savings</span>
+          <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#10b981', marginTop: '4px' }}>-{savedPercent}% Saved</div>
         </div>
       </div>
 
-      <div className="form-group" style={{ marginBottom: '24px' }}>
-        <label>Compression Level: {quality}% Quality</label>
-        <input
-          type="range"
-          min="5"
-          max="95"
-          value={quality}
-          onChange={handleQualityChange}
-          className="range-slider"
-        />
+      <div className="settings-grid">
+        <div className="field-box" style={{ gridColumn: '1 / -1' }}>
+          <label className="field-label">Quality Level Slider: {quality}%</label>
+          <input
+            type="range"
+            min="5"
+            max="95"
+            value={quality}
+            onChange={(e) => handleQualityChange(parseInt(e.target.value))}
+            className="glass-slider"
+          />
+        </div>
       </div>
 
-      <div className="preview-container">
-        <img src={compressedUrl || image?.src} alt="Compressed Preview" className="preview-image" />
+      <div className="canvas-preview-box">
+        <img src={compressedUrl || image?.src} alt="Compressed Preview" className="preview-rendered-img" />
       </div>
     </div>
   );

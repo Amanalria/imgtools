@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Eraser, Download, RefreshCw } from 'lucide-react';
+import { Eraser, Download, RefreshCw, Layers } from 'lucide-react';
+import { triggerFileDownload } from '../utils/downloadHelper';
 
 export default function BgRemoverTool({ image, onSaveHistory }) {
   const [targetColor, setTargetColor] = useState('#FFFFFF');
   const [tolerance, setTolerance] = useState(40);
+  const [feather, setFeather] = useState(10);
   const [replacedBg, setReplacedBg] = useState('transparent');
   const [processedUrl, setProcessedUrl] = useState(null);
 
@@ -21,7 +23,6 @@ export default function BgRemoverTool({ image, onSaveHistory }) {
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imgData.data;
 
-      // Parse target hex color
       const hex = targetColor.replace('#', '');
       const tr = parseInt(hex.substring(0, 2), 16) || 255;
       const tg = parseInt(hex.substring(2, 4), 16) || 255;
@@ -32,13 +33,11 @@ export default function BgRemoverTool({ image, onSaveHistory }) {
         const g = data[i + 1];
         const b = data[i + 2];
 
-        // Euclidean distance color diff
         const diff = Math.sqrt((r - tr) ** 2 + (g - tg) ** 2 + (b - tb) ** 2);
         if (diff < tolerance * 2.5) {
           if (replacedBg === 'transparent') {
-            data[i + 3] = 0; // Alpha transparent
+            data[i + 3] = 0;
           } else {
-            // Replaced color
             const rHex = replacedBg.replace('#', '');
             data[i] = parseInt(rHex.substring(0, 2), 16) || 0;
             data[i + 1] = parseInt(rHex.substring(2, 4), 16) || 0;
@@ -57,72 +56,77 @@ export default function BgRemoverTool({ image, onSaveHistory }) {
     };
   };
 
-  const downloadImage = () => {
-    if (!processedUrl) return;
-    const link = document.createElement('a');
-    link.download = 'bg_removed.png';
-    link.href = processedUrl;
-    link.click();
+  const handleDownload = () => {
+    processBgRemoval();
+    triggerFileDownload(processedUrl || image?.src, 'bg_removed.png');
   };
 
   return (
-    <div className="panel">
-      <div className="panel-header">
-        <div className="panel-title">
-          <Eraser size={22} /> Background Remover & Chroma Keyer
+    <div className="glass-panel">
+      <div className="panel-head">
+        <div className="panel-title-text">
+          <Eraser size={24} style={{ color: 'var(--accent-primary)' }} /> Chroma Keyer & Background Eraser
         </div>
-        <button className="btn-primary" onClick={downloadImage}>
-          <Download size={18} /> Download
+        <button className="btn-glass-primary" onClick={handleDownload}>
+          <Download size={18} /> Download Transparent PNG
         </button>
       </div>
 
-      <div className="control-grid">
-        <div className="form-group">
-          <label>Target Color to Remove</label>
+      <div className="settings-grid">
+        <div className="field-box">
+          <label className="field-label">Target Color to Erase</label>
           <input
             type="color"
-            className="form-control"
+            className="glass-input"
             value={targetColor}
             onChange={(e) => setTargetColor(e.target.value)}
-            style={{ height: '42px', padding: '2px 6px' }}
+            style={{ height: '44px', padding: '4px' }}
           />
         </div>
 
-        <div className="form-group">
-          <label>Removal Threshold: {tolerance}%</label>
+        <div className="field-box">
+          <label className="field-label">Sensitivity Threshold: {tolerance}%</label>
           <input
             type="range"
             min="5"
             max="90"
             value={tolerance}
             onChange={(e) => setTolerance(parseInt(e.target.value))}
-            className="range-slider"
+            className="glass-slider"
           />
         </div>
 
-        <div className="form-group">
-          <label>Background Fill</label>
-          <select
-            className="form-select"
-            value={replacedBg}
-            onChange={(e) => setReplacedBg(e.target.value)}
-          >
-            <option value="transparent">Transparent PNG</option>
-            <option value="#FFFFFF">White</option>
-            <option value="#000000">Black</option>
-            <option value="#6366F1">Indigo Accent</option>
+        <div className="field-box">
+          <label className="field-label">Edge Softening Feather: {feather}px</label>
+          <input
+            type="range"
+            min="0"
+            max="30"
+            value={feather}
+            onChange={(e) => setFeather(parseInt(e.target.value))}
+            className="glass-slider"
+          />
+        </div>
+
+        <div className="field-box">
+          <label className="field-label">Background Replacement Fill</label>
+          <select className="glass-select" value={replacedBg} onChange={(e) => setReplacedBg(e.target.value)}>
+            <option value="transparent">Transparent (PNG Alpha)</option>
+            <option value="#FFFFFF">Solid Pure White</option>
+            <option value="#000000">Solid Pitch Black</option>
+            <option value="#6366F1">Liquid Indigo</option>
           </select>
         </div>
       </div>
 
-      <div style={{ marginBottom: '20px' }}>
-        <button className="btn-primary" onClick={processBgRemoval}>
-          <RefreshCw size={18} /> Remove Background Color
+      <div style={{ marginBottom: '22px' }}>
+        <button className="btn-glass-primary" onClick={processBgRemoval}>
+          <RefreshCw size={18} /> Process Background Removal
         </button>
       </div>
 
-      <div className="preview-container">
-        <img src={processedUrl || image?.src} alt="Bg Removed Preview" className="preview-image" />
+      <div className="canvas-preview-box">
+        <img src={processedUrl || image?.src} alt="Bg Removed Preview" className="preview-rendered-img" />
       </div>
     </div>
   );

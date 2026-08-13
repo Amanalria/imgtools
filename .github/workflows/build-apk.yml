@@ -1,0 +1,85 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+
+      - name: Grant Execute Permission for Gradle
+        run: chmod +x android/gradlew
+
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare APK Artifact
+        run: |
+          mkdir -p output_apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk output_apk/imgtools-v1.0.0-debug.apk
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: imgtools-debug-apk
+          path: output_apk/imgtools-v1.0.0-debug.apk
+
+      - name: Create Release and Upload APK
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        with:
+          tag_name: v1.0.0
+          name: ImgTools Pro v1.0.0 APK
+          body: |
+            ## ImgTools Pro Android APK Release
+            
+            🚀 **Included Image Utility Tools (10-in-1)**:
+            1. 📐 **Image Resizer & Scaler**
+            2. ✂️ **Crop & Rotate Tool**
+            3. 🔄 **Format Converter (PNG, JPG, WEBP, BMP)**
+            4. ⚡ **Image Compressor with Live Preview**
+            5. 🎨 **Color Picker & 8-Color Palette Extractor**
+            6. 🪄 **Background Remover & Chroma Keyer**
+            7. 🎛️ **Filters & Effects Studio**
+            8. ✍️ **Watermark & Text Overlay**
+            9. 🔍 **EXIF Metadata Inspector & Stripper**
+            10. 🧩 **Collage & Photo Grid Maker**
+            
+            📱 **Download & Install**: Grab `imgtools-v1.0.0-debug.apk` below!
+          files: output_apk/imgtools-v1.0.0-debug.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
